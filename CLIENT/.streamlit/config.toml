@@ -1,0 +1,10 @@
+# ==========================================================
+# FILE: frontend/.streamlit/config.toml
+# ==========================================================
+
+[theme]
+primaryColor = "#2E7D32"                # Forest Green
+backgroundColor = "#E8F5E9"             # Light Green Background
+secondaryBackgroundColor = "#C8E6C9"    # Soft Green Cards
+textColor = "#1B5E20"                   # Deep Green Text
+font = "sans serif"
