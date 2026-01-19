@@ -4,9 +4,14 @@ from pymongo import MongoClient
 from config.settings import Settings
 from urllib.parse import quote_plus
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # If your password has special characters, encode it
-username = quote_plus("plant_user")
-password = quote_plus("plant_user@966149")
+username = quote_plus(Settings.MONGO_USER)
+password = quote_plus(Settings.MONGO_PASS)
 
 # Build the URI manually
 mongo_uri = f"mongodb+srv://{username}:{password}@greeny.4mttjcp.mongodb.net/"

@@ -8,7 +8,7 @@ from routes.image_routes import image_bp
 from routes.agentic_ai_routes import agentic_ai_bp
 from flask import send_from_directory
 from routes.history_routes import history_bp
-import os
+
 
 
 app = Flask(__name__)

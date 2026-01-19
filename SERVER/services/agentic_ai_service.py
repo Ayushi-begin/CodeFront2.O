@@ -1,11 +1,11 @@
 from langchain.tools import tool
-from langchain_google_genai import ChatGoogleGenerativeAI  # ✅ Updated import
-from langgraph.graph import StateGraph, END  # ✅ Updated for latest LangGraph API
+from langchain_google_genai import ChatGoogleGenerativeAI  
+from langgraph.graph import StateGraph, END  
 from services.weather_service import get_current_weather, get_forecast_weather
 from config.db import report_db
 from config.settings import Settings
 
-# ✅ 1. Define Tools
+#  1. Define Tools
 @tool
 def fetch_weather_tool(lat: float, lon: float) -> str:
     """Fetches current and forecast weather data for given coordinates."""
@@ -42,15 +42,15 @@ def analyze_yolo_result_tool(disease: str, confidence: float) -> str:
     return f"The YOLO model detected {disease} with {confidence}% confidence."
 
 
-# ✅ 2. Define LLM (Gemini)
+#  2. Define LLM (Gemini)
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash-lite",
     temperature=0.4,
-    google_api_key=Settings.GEMINI_API_KEY  # ✅ explicitly pass the key
+    google_api_key=Settings.GEMINI_API_KEY  # explicitly pass the key
 )
 
 
-# ✅ 3. Define LangGraph State Schema
+#  3. Define LangGraph State Schema
 def agentic_node(state):
     """
     Combines all tools and reasoning to form a final analysis.
@@ -78,14 +78,14 @@ def agentic_node(state):
     return {"recommendation": response.content if hasattr(response, "content") else response}
 
 
-# ✅ 4. Build LangGraph
+# 4. Build LangGraph
 graph = StateGraph(dict)
 graph.add_node("agentic", agentic_node)
 graph.set_entry_point("agentic")
 graph.add_edge("agentic", END)
 
 
-# ✅ 5. Run workflow
+# 5. Run workflow
 def run_agentic_analysis(lat: float, lon: float, disease: str, confidence: float):
     """
     Integrates YOLO + Weather + Plant History using LangGraph agent.
