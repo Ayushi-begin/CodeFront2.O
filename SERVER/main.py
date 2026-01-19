@@ -9,7 +9,7 @@ from routes.agentic_ai_routes import agentic_ai_bp
 from flask import send_from_directory
 from routes.history_routes import history_bp
 
-
+import os
 
 app = Flask(__name__)
 app.secret_key = Settings.FLASK_SECRET_KEY            # ✅ required for session management
@@ -39,5 +39,8 @@ def home():
         <a href="/auth/login">Login with Google</a>
     '''
 
+
+
 if __name__ == "__main__":
-    app.run(host="localhost",debug=True, port=5000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
