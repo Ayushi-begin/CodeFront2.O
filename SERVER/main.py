@@ -8,10 +8,14 @@ from routes.image_routes import image_bp
 from routes.agentic_ai_routes import agentic_ai_bp
 from flask import send_from_directory
 from routes.history_routes import history_bp
+from flask_cors import CORS
 
 import os
 
 app = Flask(__name__)
+
+CORS(app)
+
 app.secret_key = Settings.FLASK_SECRET_KEY            # ✅ required for session management
 
 # Initialize OAuth
