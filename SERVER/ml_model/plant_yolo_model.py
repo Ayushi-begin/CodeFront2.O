@@ -24,7 +24,7 @@ def predict_disease_yolo(image_path):
     # 1. Connect to Hugging Face (The Remote GPU)
     # ---------------------------------------------------------
     # 👇 CHANGE THIS to your specific Space name (e.g. "ayushi/plant-health")
-    client = Client("your-username/plant-scanner-model") 
+    client = Client("Ayushi-begin/plant-scanner-model") 
     
     try:
         # ---------------------------------------------------------
