@@ -18,7 +18,7 @@ import streamlit as st
 
 # Base URL of Flask backend
 BASE_URL = "https://ai-plant-health-scanner.onrender.com"
-
+#BASE_URL = "http://localhost:5000"
 
 
 # ==========================================================

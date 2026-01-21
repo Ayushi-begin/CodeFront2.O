@@ -5,7 +5,7 @@ import requests
 # 🔗 Backend Chatbot Endpoint
 # ==========================================================
 BASE_URL = "https://ai-plant-health-scanner.onrender.com/chatbot"
-
+#BASE_URL = "http://localhost:5000/chatbot"
 # ==========================================================
 # 🧠 Bot API Call
 # ==========================================================
