@@ -6,7 +6,9 @@ Objective:
 """
 
 import streamlit as st
-import base64  # ✅ REQUIRED for decoding the image from Render
+import base64
+import io  # ✅ REQUIRED for converting bytes to image
+from PIL import Image  # ✅ REQUIRED for robust image handling
 from utils import api_client
 
 # ==========================================================
@@ -115,7 +117,7 @@ def process_image(image_source):
         st.session_state["confidence"] = 0.0
 
     # ---------------------------------------------------------
-    # ✅ FIX: DISPLAY ANNOTATED IMAGE (DECODE BASE64)
+    # ✅ FIX: ROBUST IMAGE DECODING (PIL + IO)
     # ---------------------------------------------------------
     with col2:
         annotated_data = yolo_response.get("annotated_image")
@@ -126,19 +128,23 @@ def process_image(image_source):
                 if "," in annotated_data:
                     annotated_data = annotated_data.split(",")[1]
                 
-                # 2. Decode Base64 to Bytes
+                # 2. Decode Base64 to Raw Bytes
                 img_bytes = base64.b64decode(annotated_data)
                 
-                # 3. Display
+                # 3. Convert Bytes to PIL Image (Prevents AttributeError)
+                # This wrapper ensures Streamlit receives a valid Object, not raw data
+                image_stream = io.BytesIO(img_bytes)
+                final_image = Image.open(image_stream)
+
+                # 4. Display
                 st.image(
-                    img_bytes,
+                    final_image,
                     caption="Analyzed Image (YOLO Output)",
                     use_column_width=True
                 )
             except Exception as e:
                 st.error(f"⚠️ Error displaying image: {e}")
-                # Fallback: Show raw response if debug needed
-                # st.write(annotated_data[:100] + "...") 
+                # Optional: print len(annotated_data) for debugging
         else:
             st.info("No annotated image returned from server.")
 
