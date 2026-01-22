@@ -1,66 +1,42 @@
-"""
-plant_yolo_model.py
-"""
-
 import os
 import shutil
+import base64
 from gradio_client import Client
 
-# ✅ Base directory (ml_model/)
+# ✅ Base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# ✅ Output folder: ml_model/outputs/detections
-# We match the folder structure your original code created
 OUTPUT_DIR = os.path.join(BASE_DIR, "outputs", "detections")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def predict_disease_yolo(image_path):
-    """
-    Sends image to Hugging Face, downloads the annotated result, 
-    and saves it locally to match the professor's demo requirements.
-    """
-    
-    # ---------------------------------------------------------
-    # 1. Connect to Hugging Face (The Remote GPU)
-    # ---------------------------------------------------------
-    # 👇 CHANGE THIS to your specific Space name (e.g. "ayushi/plant-health")
+    # 1. Connect to Hugging Face
     client = Client("Ayushi-begin/plant-scanner-model") 
     
     try:
-        # ---------------------------------------------------------
-        # 2. Get Prediction (Image + JSON)
-        # ---------------------------------------------------------
-        # The API returns a list: [path_to_downloaded_image, json_data]
-        result = client.predict(
-            image_path, 
-            api_name="/predict"
-        )
+        # 2. Get Prediction
+        result = client.predict(image_path, api_name="/predict")
         
-        temp_annotated_img_path = result[0] # The image file downloaded from HF
-        detections_data = result[1]         # The list of diseases
+        temp_annotated_img_path = result[0]
+        detections_data = result[1]
         
-        # ---------------------------------------------------------
-        # 3. Save Image to Local Folder (Mimic YOLO logic)
-        # ---------------------------------------------------------
-        # Create a unique filename based on the input
+        # 3. Save locally (optional, but good for debug)
         filename = os.path.basename(image_path)
         final_image_path = os.path.join(OUTPUT_DIR, filename)
-        
-        # Move the downloaded file to your project folder
         shutil.move(temp_annotated_img_path, final_image_path)
         
-        # ---------------------------------------------------------
-        # 4. Return EXACT Format expected by Frontend
-        # ---------------------------------------------------------
+        # 4. CONVERT TO BASE64 (The Fix 🛠️)
+        with open(final_image_path, "rb") as img_file:
+            # Convert the actual image file to a text string
+            b64_string = base64.b64encode(img_file.read()).decode('utf-8')
+        
         return {
             "detections": detections_data,
-            "annotated_image": final_image_path
+            "annotated_image": b64_string  # ✅ Sending DATA, not a path
         }
 
     except Exception as e:
-        print(f"❌ Error in Remote Prediction: {e}")
-        # Fallback to prevent crash
+        print(f"❌ Error: {e}")
         return {
             "detections": [{"disease": "Error", "confidence": 0}],
-            "annotated_image": image_path 
+            "annotated_image": None 
         }

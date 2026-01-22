@@ -1,19 +1,13 @@
-# ==========================================================
-# FILE: frontend/pages/home.py
-# ==========================================================
 """
 Objective:
     Main interface for uploading or capturing plant leaf images,
     performing YOLO-based disease detection, fetching weather data,
     and getting AI-generated recommendations.
-
-Flow:
-    SCAN → Choose Input Method → YOLO Detection → Weather → AI Summary
 """
 
 import streamlit as st
+import base64  # ✅ REQUIRED for decoding the image from Render
 from utils import api_client
-import requests
 
 # ==========================================================
 # FUNCTION: RENDER HOME PAGE
@@ -36,7 +30,7 @@ def render():
     st.markdown("---")
     center = st.columns([1, 1, 1])
     with center[1]:
-        if st.button("SCAN", width="stretch", type="primary"):  # ✅ updated
+        if st.button("SCAN", width=None, type="primary", use_container_width=True):
             st.session_state["scan_mode"] = "select_mode"
 
     # ------------------------------------------------------
@@ -69,12 +63,14 @@ def render():
                 if st.button("🔍 Analyze Uploaded Image", type="primary"):
                     st.session_state["image_source"] = uploaded_image
                     st.session_state["scan_mode"] = "process"
-       
+        
     # ------------------------------------------------------
     # RUN PROCESS IMAGE IF WE ARE IN PROCESS MODE
     # ------------------------------------------------------
     if st.session_state["scan_mode"] == "process":
-        process_image(st.session_state["image_source"])
+        # Pass the image to the processing function
+        if "image_source" in st.session_state:
+            process_image(st.session_state["image_source"])
 
 
 # ==========================================================
@@ -87,39 +83,64 @@ def process_image(image_source):
     st.markdown("### 📸 Image Preview and Analysis")
     col1, col2 = st.columns(2)
     with col1:
-        st.image(image_source, caption="Uploaded Image", width="stretch")  # ✅ updated
+        st.image(image_source, caption="Uploaded Image", use_column_width=True)
 
     # STEP 2: YOLO Detection
     with st.spinner("🔍 Detecting plant disease using YOLO model..."):
+        # This calls your backend (Render)
         yolo_response = api_client.get_yolo_result(image_source)
 
+    # Validate Response
     if not yolo_response or "detections" not in yolo_response:
         st.error("❌ Detection failed. Please try again.")
         return    
 
-    # SAVE YOLO RESULT FOR RESULTS PAGE 🚀
+    # SAVE YOLO RESULT FOR RESULTS PAGE
     st.session_state["yolo_result"] = yolo_response 
 
-    if not yolo_response or "detections" not in yolo_response:
-        st.error("❌ Detection failed. Please try again.")
-        return
-
     # Pick the highest-confidence detection
-    top_detection = max(yolo_response["detections"], key=lambda x: x["confidence"])
-    st.session_state["disease"] = top_detection["disease"]
-    st.session_state["confidence"] = top_detection["confidence"]
-
-    with col2:
-        st.image(
-            yolo_response.get("annotated_image"),
-            caption="Analyzed Image (YOLO Output)",
-            width="stretch"  # ✅ updated
+    if yolo_response["detections"]:
+        top_detection = max(yolo_response["detections"], key=lambda x: x["confidence"])
+        st.session_state["disease"] = top_detection["disease"]
+        st.session_state["confidence"] = top_detection["confidence"]
+        
+        # Display Disease Name
+        st.success(
+            f"✅ Detected Disease: **{top_detection['disease']}** "
+            f"(Confidence: {top_detection['confidence']:.2f}%)"
         )
+    else:
+        st.warning("No disease detected.")
+        st.session_state["disease"] = "Healthy"
+        st.session_state["confidence"] = 0.0
 
-    st.success(
-        f"✅ Detected Disease: **{top_detection['disease']}** "
-        f"(Confidence: {top_detection['confidence']:.2f}%)"
-    )
+    # ---------------------------------------------------------
+    # ✅ FIX: DISPLAY ANNOTATED IMAGE (DECODE BASE64)
+    # ---------------------------------------------------------
+    with col2:
+        annotated_data = yolo_response.get("annotated_image")
+        
+        if annotated_data:
+            try:
+                # 1. Clean the string (remove headers if present)
+                if "," in annotated_data:
+                    annotated_data = annotated_data.split(",")[1]
+                
+                # 2. Decode Base64 to Bytes
+                img_bytes = base64.b64decode(annotated_data)
+                
+                # 3. Display
+                st.image(
+                    img_bytes,
+                    caption="Analyzed Image (YOLO Output)",
+                    use_column_width=True
+                )
+            except Exception as e:
+                st.error(f"⚠️ Error displaying image: {e}")
+                # Fallback: Show raw response if debug needed
+                # st.write(annotated_data[:100] + "...") 
+        else:
+            st.info("No annotated image returned from server.")
 
     # STEP 3: Get user location
     st.markdown("---")
@@ -144,9 +165,8 @@ def process_image(image_source):
 
             # Proceed to AI summary
             generate_ai_summary()
-            # ----------------------------------------------------------
-            # SHOW AI SUMMARY ON HOME PAGE
-            # ----------------------------------------------------------
+            
+            # Show AI Summary
             if "agentic_summary" in st.session_state:
                 st.markdown("---")
                 st.subheader("🤖 AI Summary & Recommendation")
@@ -177,12 +197,6 @@ def generate_ai_summary():
         if ai_response:
             st.session_state["agentic_summary"] = ai_response.get("summary")
             st.session_state["agentic_full"] = ai_response.get("recommendation")
-
             st.success("🌱 AI Recommendation Ready!")
-
-            # ❌ Removed redirect
-            # st.session_state["scan_mode"] = None
-            # st.session_state["page"] = "Results"
-
         else:
             st.error("⚠️ Failed to generate AI recommendation. Try again later.")
