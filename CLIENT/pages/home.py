@@ -1,34 +1,42 @@
 import streamlit as st
 import base64
 import io
+import numpy as np  # ✅ The Secret Weapon
 from PIL import Image
 from utils import api_client
 
 # ==========================================================
-# 🛠️ HELPER: The "Anti-Crash" Image Loader
+# 🛡️ HELPER: FORCE TO NUMPY ARRAY (BULLETPROOF)
 # ==========================================================
 def load_safe_image(image_data):
     """
-    Forces any input (Bytes, UploadedFile, Base64) into a PIL Image.
-    This prevents the 'AttributeError' crash on Render/Streamlit Cloud.
+    Converts ANY input (Bytes, UploadedFile, Base64) into a Numpy Array.
+    Streamlit LOVES Numpy arrays and will never crash checking for '.format'.
     """
     try:
-        # Case 1: It's already a PIL Image -> Return it
-        if isinstance(image_data, Image.Image):
-            return image_data
+        image_obj = None
 
-        # Case 2: It's an Uploaded File (from st.file_uploader)
+        # Case 1: It's an Uploaded File or Camera Input
         if hasattr(image_data, "read"):
-            image_data.seek(0)  # 👈 CRITICAL: Reset pointer to start
-            return Image.open(image_data)
+            image_data.seek(0)  # Reset pointer
+            image_obj = Image.open(image_data)
 
-        # Case 3: It's Raw Bytes (from Base64 decode)
-        if isinstance(image_data, bytes):
-            return Image.open(io.BytesIO(image_data))
+        # Case 2: It's Raw Bytes (from Base64 decode)
+        elif isinstance(image_data, bytes):
+            image_obj = Image.open(io.BytesIO(image_data))
+        
+        # Case 3: It's already a PIL Image
+        elif isinstance(image_data, Image.Image):
+            image_obj = image_data
 
+        # 🚨 FINAL STEP: Convert to Numpy Array
+        # This strips away all "File" metadata that causes crashes
+        if image_obj:
+            return np.array(image_obj.convert("RGB"))
+            
         return None
+
     except Exception as e:
-        # If it fails, print error to console but don't crash app
         print(f"Image Load Error: {e}")
         return None
 
@@ -80,18 +88,17 @@ def process_image(image_source):
     st.markdown("### 📸 Image Preview and Analysis")
     col1, col2 = st.columns(2)
 
-    # --- 1. DISPLAY UPLOADED IMAGE (Safely) ---
+    # --- 1. DISPLAY UPLOADED IMAGE (Safely as Array) ---
     with col1:
-        # Convert to PIL so Streamlit doesn't crash
-        pil_upload = load_safe_image(image_source)
-        if pil_upload:
-            st.image(pil_upload, caption="Uploaded Image", use_container_width=True)
+        numpy_upload = load_safe_image(image_source)
+        if numpy_upload is not None:
+            st.image(numpy_upload, caption="Uploaded Image", use_container_width=True)
         else:
             st.error("Could not load uploaded image.")
 
     # --- 2. RUN BACKEND API ---
     with st.spinner("🔍 Detecting plant disease..."):
-        # Reset pointer again before sending to API (Crucial for UploadedFiles)
+        # Reset pointer again before sending to API
         if hasattr(image_source, "seek"):
             image_source.seek(0)
             
@@ -114,7 +121,7 @@ def process_image(image_source):
         st.session_state["disease"] = "Healthy"
         st.session_state["confidence"] = 0.0
 
-    # --- 3. DISPLAY ANNOTATED IMAGE (Safely) ---
+    # --- 3. DISPLAY ANNOTATED IMAGE (Safely as Array) ---
     with col2:
         annotated_b64 = yolo_response.get("annotated_image")
         
@@ -124,12 +131,12 @@ def process_image(image_source):
                 if "," in annotated_b64:
                     annotated_b64 = annotated_b64.split(",")[1]
                 
-                # Decode -> Bytes -> PIL Image
+                # Decode -> Bytes -> Numpy Array
                 img_bytes = base64.b64decode(annotated_b64)
-                pil_annotated = load_safe_image(img_bytes)
+                numpy_annotated = load_safe_image(img_bytes)
                 
-                if pil_annotated:
-                    st.image(pil_annotated, caption="Analyzed Image", use_container_width=True)
+                if numpy_annotated is not None:
+                    st.image(numpy_annotated, caption="Analyzed Image", use_container_width=True)
                 else:
                     st.error("Failed to process analyzed image.")
             except Exception as e:
