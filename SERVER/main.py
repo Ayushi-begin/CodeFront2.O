@@ -8,14 +8,11 @@ from routes.image_routes import image_bp
 from routes.agentic_ai_routes import agentic_ai_bp
 from flask import send_from_directory
 from routes.history_routes import history_bp
+import os
 from flask_cors import CORS
 
-import os
-
 app = Flask(__name__)
-
 CORS(app)
-
 app.secret_key = Settings.FLASK_SECRET_KEY            # ✅ required for session management
 
 # Initialize OAuth
@@ -43,11 +40,6 @@ def home():
         <a href="/auth/login">Login with Google</a>
     '''
 
-
-
 if __name__ == "__main__":
-    
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-    
-
+    port = int(os.environ.get("PORT", 7860))
+    app.run(host="0.0.0.0", port=port, debug=True)

@@ -1,5 +1,3 @@
-#CLIENT/app.py
-
 import streamlit as st
 
 # 1. PAGE CONFIGURATION

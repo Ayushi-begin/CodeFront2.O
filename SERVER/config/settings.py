@@ -15,6 +15,7 @@ class Settings:
     MONGO_USER = os.getenv("MONGO_USER")
     MONGO_PASS = os.getenv("MONGO_PASS")
 
+
     OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
     
     FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")

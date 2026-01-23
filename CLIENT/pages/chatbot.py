@@ -1,11 +1,16 @@
 import streamlit as st
 import requests
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+host = os.getenv("APP_HOST")
 
 # ==========================================================
 # 🔗 Backend Chatbot Endpoint
 # ==========================================================
-BASE_URL = "https://ai-plant-health-scanner.onrender.com/chatbot"
-#BASE_URL = "http://localhost:5000/chatbot"
+BASE_URL = f"{host}/chatbot"
+
 # ==========================================================
 # 🧠 Bot API Call
 # ==========================================================

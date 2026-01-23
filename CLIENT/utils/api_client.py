@@ -15,9 +15,14 @@ Functions:
 
 import requests
 import streamlit as st
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # Base URL of Flask backend
-BASE_URL = "http://localhost:5000"
+
+BASE_URL = os.getenv("APP_HOST")
 
 
 # ==========================================================

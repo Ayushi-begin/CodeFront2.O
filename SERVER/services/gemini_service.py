@@ -10,7 +10,7 @@ class GeminiService:
         # Configure the Gemini SDK
         genai.configure(api_key=settings.GEMINI_API_KEY)
         # Load the Gemini 2.5 Flash model
-        self.model = genai.GenerativeModel("gemini-2.5-flash-lite")
+        self.model = genai.GenerativeModel("gemini-2.5-flash")
 
     def generate_response(self, user_query: str) -> str:
         """
