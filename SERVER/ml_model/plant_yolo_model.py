@@ -1,42 +1,65 @@
-import os
-import shutil
-import base64
-from gradio_client import Client
+"""
+plant_yolo_model.py
 
-# ✅ Base directory
+Objective:
+    Load the trained YOLOv8 model and perform plant disease detection.
+
+Input:
+    image_path (str): Path to uploaded image file.
+
+Output:
+    dict: Detection results (disease, confidence) and annotated image path.
+"""
+
+import os
+from ultralytics import YOLO
+
+# ✅ Base directory of this file (ml_model/)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join(BASE_DIR, "outputs", "detections")
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# ✅ Point to the model inside ml_model/model/
+MODEL_PATH = os.path.join(BASE_DIR, "model", "best.pt")
+
+# ✅ Verify model path
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(f"❌ Model file not found at {MODEL_PATH}")
+
+# ✅ Load YOLO model
+model = YOLO(MODEL_PATH)
+
+# ✅ Create output folder inside ml_model/outputs
+OUTPUT_FOLDER = os.path.join(BASE_DIR, "outputs")
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 def predict_disease_yolo(image_path):
-    # 1. Connect to Hugging Face
-    client = Client("Ayushi-begin/plant-scanner-model") 
-    
-    try:
-        # 2. Get Prediction
-        result = client.predict(image_path, api_name="/predict")
-        
-        temp_annotated_img_path = result[0]
-        detections_data = result[1]
-        
-        # 3. Save locally (optional, but good for debug)
-        filename = os.path.basename(image_path)
-        final_image_path = os.path.join(OUTPUT_DIR, filename)
-        shutil.move(temp_annotated_img_path, final_image_path)
-        
-        # 4. CONVERT TO BASE64 (The Fix 🛠️)
-        with open(final_image_path, "rb") as img_file:
-            # Convert the actual image file to a text string
-            b64_string = base64.b64encode(img_file.read()).decode('utf-8')
-        
-        return {
-            "detections": detections_data,
-            "annotated_image": b64_string  # ✅ Sending DATA, not a path
-        }
+    """
+    Run YOLO detection on plant leaf image and return results.
+    """
+    results = model.predict(
+        source=image_path,
+        save=True,
+        project=OUTPUT_FOLDER,
+        name="detections",
+        exist_ok=True
+    )
 
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        return {
-            "detections": [{"disease": "Error", "confidence": 0}],
-            "annotated_image": None 
-        }
+    detections = []
+    for box in results[0].boxes:
+        cls = int(box.cls[0])
+        conf = float(box.conf[0])
+        label = model.names[cls]
+        detections.append({
+            "disease": label,
+            "confidence": round(conf * 100, 2)
+        })
+
+    # ✅ FIXED LINE — using os.path.join instead of /
+    annotated_image_path = os.path.join(results[0].save_dir, os.path.basename(image_path))
+    
+    #NEW
+    #annotated_image_url = f"http://localhost:5000/outputs/detections/{os.path.basename(annotated_image_path)}"
+
+    return {
+        "detections": detections,
+        "annotated_image": annotated_image_path #from _path to _url
+    }
