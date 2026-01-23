@@ -2,64 +2,84 @@
 plant_yolo_model.py
 
 Objective:
-    Load the trained YOLOv8 model and perform plant disease detection.
+    Call the Hugging Face Gradio app to perform plant disease detection
+    instead of running YOLO locally.
 
 Input:
     image_path (str): Path to uploaded image file.
 
 Output:
-    dict: Detection results (disease, confidence) and annotated image path.
+    dict:
+        - detections: list of detected diseases with confidence
+        - annotated_image: local path to annotated image
+        - error (optional): if something goes wrong
 """
 
 import os
-from ultralytics import YOLO
+import shutil
+from gradio_client import Client, handle_file
+from typing import Dict, Any
 
-# ✅ Base directory of this file (ml_model/)
+# ==========================================================
+# CONFIG
+# ==========================================================
+
+HF_SPACE_ID = "Ayushi-begin/plant-scanner-model"   # Your Hugging Face Space ID
+client = Client(HF_SPACE_ID)
+
+# Local folder to store returned annotated images
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# ✅ Point to the model inside ml_model/model/
-MODEL_PATH = os.path.join(BASE_DIR, "model", "best.pt")
-
-# ✅ Verify model path
-if not os.path.exists(MODEL_PATH):
-    raise FileNotFoundError(f"❌ Model file not found at {MODEL_PATH}")
-
-# ✅ Load YOLO model
-model = YOLO(MODEL_PATH)
-
-# ✅ Create output folder inside ml_model/outputs
 OUTPUT_FOLDER = os.path.join(BASE_DIR, "outputs")
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-def predict_disease_yolo(image_path):
+# ==========================================================
+# FUNCTION
+# ==========================================================
+
+def predict_disease_yolo(image_path: str) -> Dict[str, Any]:
     """
-    Run YOLO detection on plant leaf image and return results.
+    Send an image to the Hugging Face YOLO model and return results.
+
+    Args:
+        image_path (str): Path to the input image.
+
+    Returns:
+        dict: {
+            "detections": list of dicts containing detected diseases and confidence,
+            "annotated_image": str, local path to the annotated image,
+            "error": optional str if an error occurs
+        }
     """
-    results = model.predict(
-        source=image_path,
-        save=True,
-        project=OUTPUT_FOLDER,
-        name="detections",
-        exist_ok=True
-    )
 
-    detections = []
-    for box in results[0].boxes:
-        cls = int(box.cls[0])
-        conf = float(box.conf[0])
-        label = model.names[cls]
-        detections.append({
-            "disease": label,
-            "confidence": round(conf * 100, 2)
-        })
+    if not os.path.isfile(image_path):
+        return {"error": f"Input image not found: {image_path}"}
 
-    # ✅ FIXED LINE — using os.path.join instead of /
-    annotated_image_path = os.path.join(results[0].save_dir, os.path.basename(image_path))
-    
-    #NEW
-    #annotated_image_url = f"http://localhost:5000/outputs/detections/{os.path.basename(annotated_image_path)}"
+    try:
+        # Send image to Hugging Face Gradio API
+        result = client.predict(
+            handle_file(image_path),
+            api_name="/predict"
+        )
 
-    return {
-        "detections": detections,
-        "annotated_image": annotated_image_path #from _path to _url
-    }
+        # HF returns:
+        # result[0] -> annotated image (temporary path)
+        # result[1] -> detections (list of dicts)
+        annotated_temp_path = result[0]
+        detections = result[1]
+
+        # Save annotated image locally
+        local_image_name = f"annotated_{os.path.basename(image_path)}"
+        local_image_path = os.path.join(OUTPUT_FOLDER, local_image_name)
+        shutil.copy(annotated_temp_path, local_image_path)
+
+        return {
+            "detections": detections,
+            "annotated_image": local_image_path
+        }
+
+    except Exception as e:
+        # Friendly message if HF model is loading/waking up
+        return {
+            "error": "Model is waking up. Please try again in 30–60 seconds.",
+            "details": str(e)
+        }
