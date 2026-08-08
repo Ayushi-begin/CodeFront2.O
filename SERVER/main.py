@@ -32,6 +32,10 @@ app.register_blueprint(auth_bp)               # ✅ auth routes
 def serve_static(filename):
     return send_from_directory('static', filename)
 
+@app.route('/api/annotated/<path:filename>')
+def serve_annotated(filename):
+    return send_from_directory('ml_model/outputs', filename)
+
 
 @app.route("/")
 def home():

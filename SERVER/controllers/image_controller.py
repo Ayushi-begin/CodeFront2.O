@@ -33,12 +33,15 @@ def process_image():
     if "error" in result:
         return jsonify(result), 503
 
-    # ✅ Annotated image path is now unique and permanent
+    # ✅ Annotated image path is now a web URL, not a local file path!
+    annotated_filename = os.path.basename(result["annotated_image"])
+    annotated_url = f"{request.host_url.rstrip('/')}/api/annotated/{annotated_filename}"
+
     image_data = {
         "filename": filename,
         "filepath": filepath,
         "detections": result["detections"],
-        "annotated_image": result["annotated_image"]
+        "annotated_image": annotated_url
     }
 
     save_image_metadata(image_data)
@@ -55,6 +58,6 @@ def process_image():
     return jsonify({
         "message": "Image processed successfully",
         "detections": result["detections"],
-        "annotated_image": result["annotated_image"],
+        "annotated_image": annotated_url,
         "filename": filename  # ✅ Pass unique filename back to frontend
     }), 200
