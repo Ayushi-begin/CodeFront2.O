@@ -21,10 +21,20 @@ import os
 load_dotenv()
 
 # Base URL of Flask backend
+BASE_URL = "http://localhost:5000"
 try:
-    BASE_URL = st.secrets["APP_HOST"]
+    if "APP_HOST" in st.secrets:
+        BASE_URL = st.secrets["APP_HOST"]
 except:
+    pass
+
+if not BASE_URL or str(BASE_URL).strip().lower() == "none":
     BASE_URL = os.getenv("APP_HOST", "http://localhost:5000")
+
+if not BASE_URL or str(BASE_URL).strip().lower() == "none":
+    BASE_URL = "http://localhost:5000"
+
+BASE_URL = str(BASE_URL).rstrip('/')
 
 
 # ==========================================================
