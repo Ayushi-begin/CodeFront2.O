@@ -21,8 +21,10 @@ import os
 load_dotenv()
 
 # Base URL of Flask backend
-
-BASE_URL = os.getenv("APP_HOST")
+try:
+    BASE_URL = st.secrets["APP_HOST"]
+except:
+    BASE_URL = os.getenv("APP_HOST", "http://localhost:5000")
 
 
 # ==========================================================
