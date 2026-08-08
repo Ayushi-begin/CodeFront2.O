@@ -12,10 +12,11 @@ Output:
     Redirects user to backend /auth/login for Google authentication.
 """
 
+import os
 import streamlit as st
 
 # ✅ Backend URL (adjust if different)
-BACKEND_URL = "http://localhost:5000"
+BACKEND_URL = os.getenv("APP_HOST", "http://localhost:5000")
 
 st.set_page_config(page_title="AI Plant Health Scanner", page_icon="🌿", layout="centered")
 

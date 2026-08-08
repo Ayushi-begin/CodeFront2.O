@@ -25,7 +25,7 @@ from typing import Dict, Any
 # ==========================================================
 
 HF_SPACE_ID = "Ayushi-begin/plant-scanner-model"   # Your Hugging Face Space ID
-client = Client(HF_SPACE_ID)
+client = None
 
 # Local folder to store returned annotated images
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -55,6 +55,10 @@ def predict_disease_yolo(image_path: str) -> Dict[str, Any]:
         return {"error": f"Input image not found: {image_path}"}
 
     try:
+        global client
+        if client is None:
+            client = Client(HF_SPACE_ID)
+            
         # Send image to Hugging Face Gradio API
         result = client.predict(
             handle_file(image_path),

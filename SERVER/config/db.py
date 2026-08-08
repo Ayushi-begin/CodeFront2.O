@@ -10,7 +10,7 @@ password = quote_plus(Settings.MONGO_PASS)
 
 
 # Build the URI manually
-mongo_uri = f"mongodb+srv://{username}:{password}@greeny.4mttjcp.mongodb.net/"
+mongo_uri = Settings.MONGO_URI
 
 client = MongoClient(mongo_uri)
 
@@ -19,7 +19,7 @@ image_db = client["image_db"]
 report_db = client["report_db"]
 history_db = client["history_db"]
 
-print("✅ Connected to MongoDB:")
+print("[SUCCESS] Connected to MongoDB:")
 print(f"   - User DB: {user_db.name}")
 print(f"   - Image DB: {image_db.name}")
 print(f"   - Report DB: {report_db.name}")

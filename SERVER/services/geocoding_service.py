@@ -3,37 +3,27 @@ File: services/geocoding_service.py
 
 Objective:
     Convert location name into geographic coordinates (latitude, longitude)
-    using OpenCage Geocoding API.
-
-Input:
-    location_name (str): User-provided location (city, village, etc.)
-
-Output:
-    dict: {"lat": float, "lon": float, "city": str}
+    using OpenWeather Geocoding API.
 """
 
-import os
 import requests
-from dotenv import load_dotenv
-
-load_dotenv()
-
-OPENCAGE_API_KEY = os.getenv("OPENCAGE_API_KEY")
+from config.settings import Settings
 
 def get_coordinates(location_name: str):
     """Fetch latitude and longitude from a location name."""
-    if not OPENCAGE_API_KEY:
-        raise ValueError("OpenCage API key missing in .env")
+    api_key = Settings.OPENWEATHER_API_KEY
+    if not api_key:
+        raise ValueError("OpenWeather API key missing in config")
 
-    url = f"https://api.opencagedata.com/geocode/v1/json?q={location_name}&key={OPENCAGE_API_KEY}"
+    url = f"http://api.openweathermap.org/geo/1.0/direct?q={location_name}&limit=1&appid={api_key}"
     response = requests.get(url)
-    data = response.json()
-
-    if data.get("results"):
-        geometry = data["results"][0]["geometry"]
-        components = data["results"][0]["components"]
-        lat, lon = geometry["lat"], geometry["lng"]
-        city = components.get("city") or components.get("town") or components.get("village") or location_name
-        return {"lat": lat, "lon": lon, "city": city}
+    
+    if response.status_code == 200:
+        data = response.json()
+        if data and len(data) > 0:
+            lat = data[0]["lat"]
+            lon = data[0]["lon"]
+            city = data[0].get("name", location_name)
+            return {"lat": lat, "lon": lon, "city": city}
 
     return None

@@ -11,7 +11,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def save_image_metadata(image_data):
     images = image_db["images"]
     images.insert_one(image_data)
-    print("✅ Image metadata stored.")
+    print("[SUCCESS] Image metadata stored.")
 
 def process_image():
     if "image" not in request.files:
@@ -29,6 +29,9 @@ def process_image():
 
     # Run YOLO model
     result = predict_disease_yolo(filepath)
+
+    if "error" in result:
+        return jsonify(result), 503
 
     # ✅ Annotated image path is now unique and permanent
     image_data = {

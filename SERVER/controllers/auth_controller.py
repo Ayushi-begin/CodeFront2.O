@@ -42,7 +42,7 @@ def save_user(user_info):
     existing_user = users_collection.find_one({"email": user_info.get("email")})
 
     if existing_user:
-        print(f"ℹ️ User already exists: {user_info.get('email')}")
+        print(f"[INFO] User already exists: {user_info.get('email')}")
     else:
         users_collection.insert_one({
             "name": user_info.get("name"),
@@ -51,4 +51,4 @@ def save_user(user_info):
             "given_name": user_info.get("given_name"),
             "family_name": user_info.get("family_name"),
         })
-        print(f"✅ User saved successfully: {user_info.get('email')}")
+        print(f"[SUCCESS] User saved successfully: {user_info.get('email')}")

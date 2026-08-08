@@ -14,10 +14,13 @@ Output:
     Saves user info in st.session_state and redirects to dashboard.
 """
 
+import os
 import streamlit as st
 import json
 
 st.set_page_config(page_title="Login Callback", page_icon="🔄")
+
+BACKEND_URL = os.getenv("APP_HOST", "http://localhost:5000")
 
 st.write("🔄 Logging you in... please wait...")
 
@@ -45,4 +48,4 @@ if "user_info" in query_params:
         st.error("⚠️ Login failed. Invalid user data received.")
 else:
     st.error("⚠️ No user info found. Please login again.")
-    st.markdown("[🔑 Go to Login](http://localhost:5000/auth/login)")
+    st.markdown(f"[🔑 Go to Login]({BACKEND_URL}/auth/login)")

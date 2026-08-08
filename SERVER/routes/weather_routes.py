@@ -34,6 +34,8 @@ def get_weather():
         # ✅ Case 1: User provides location name (e.g., Lucknow)
         if location:
             result = analyze_weather_by_location(location)
+            if "error" in result:
+                return jsonify(result), 400
             return jsonify(result)
 
         # ✅ Case 2: User provides coordinates
@@ -48,5 +50,5 @@ def get_weather():
             }), 400
 
     except Exception as e:
-        print(f"❌ Weather route error: {e}")
+        print(f"[ERROR] Weather route error: {e}")
         return jsonify({"error": "Something went wrong while processing weather data."}), 500

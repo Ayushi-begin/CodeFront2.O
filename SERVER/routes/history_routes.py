@@ -2,6 +2,7 @@
 
 from flask import Blueprint, request, jsonify
 from bson import ObjectId
+from bson.errors import InvalidId
 from datetime import datetime
 from config.db import history_db
 
@@ -40,8 +41,15 @@ def get_history():
 @history_bp.route("/delete-history", methods=["DELETE"])
 def delete_history():
     record_id = request.args.get("id")
+    if not record_id:
+        return jsonify({"error": "Missing id"}), 400
 
-    history_db["history"].delete_one({"_id": ObjectId(record_id)})
+    try:
+        obj_id = ObjectId(record_id)
+    except InvalidId:
+        return jsonify({"error": "Invalid id format"}), 400
+
+    history_db["history"].delete_one({"_id": obj_id})
 
     return jsonify({"message": "deleted"}), 200
 

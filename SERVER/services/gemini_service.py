@@ -26,5 +26,5 @@ class GeminiService:
             response = self.model.generate_content(user_query)
             return response.text
         except Exception as e:
-            print(f"❌ Gemini API Error: {e}")
+            print(f"[ERROR] Gemini API Error: {e}")
             return "Sorry, I'm having trouble connecting to the Gemini model right now."

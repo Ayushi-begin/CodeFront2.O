@@ -42,7 +42,16 @@ def get_yolo_result(image_source):
         response = requests.post(f"{BASE_URL}/api/upload", files=files)
         if response.ok:
             return response.json()
-        st.error(f"❌ YOLO API Error: {response.text}")
+            
+        try:
+            error_data = response.json()
+            error_msg = error_data.get("error", response.text)
+            if "waking up" in error_msg:
+                st.warning(f"⏳ {error_msg}")
+            else:
+                st.error(f"❌ YOLO API Error: {error_msg}")
+        except:
+            st.error(f"❌ YOLO API Error: {response.text}")
     except Exception as e:
         st.error(f"⚠️ Connection error with YOLO API: {e}")
     return None
@@ -65,7 +74,12 @@ def get_weather(location: str):
         if response.ok:
             return response.json()
 
-        st.error(f"⚠️ Weather API Error: {response.text}")
+        try:
+            error_data = response.json()
+            error_msg = error_data.get("error", response.text)
+            st.warning(f"⚠️ {error_msg}")
+        except:
+            st.error(f"⚠️ Weather API Error: {response.text}")
 
     except Exception as e:
         st.error(f"⚠️ Weather API connection failed: {e}")
@@ -88,7 +102,13 @@ def get_weather_by_coords(lat, lon):
         response = requests.get(f"{BASE_URL}/api/weather", params={"lat": float(lat), "lon": float(lon)})
         if response.ok:
             return response.json()
-        st.error(f"⚠️ Weather API (coords) Error: {response.text}")
+            
+        try:
+            error_data = response.json()
+            error_msg = error_data.get("error", response.text)
+            st.warning(f"⚠️ {error_msg}")
+        except:
+            st.error(f"⚠️ Weather API (coords) Error: {response.text}")
     except Exception as e:
         st.error(f"⚠️ Weather API connection failed: {e}")
     return None
@@ -111,7 +131,13 @@ def get_agentic_summary(lat, lon, disease, confidence):
         response = requests.post(f"{BASE_URL}/api/agentic-ai", json=payload)
         if response.ok:
             return response.json()
-        st.error(f"⚠️ AI Summary API Error: {response.text}")
+            
+        try:
+            error_data = response.json()
+            error_msg = error_data.get("error", response.text)
+            st.warning(f"⚠️ {error_msg}")
+        except:
+            st.error(f"⚠️ AI Summary API Error: {response.text}")
     except Exception as e:
         st.error(f"⚠️ AI Summary connection failed: {e}")
     return None
